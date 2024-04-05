@@ -13,12 +13,20 @@ app.use(cors({
 app.use(express.json({limit:"16kb"}))
 //jab data url se aya
 app.use(express.urlencoded({extended:true, limit:"16kb"}))
-
 app.use(express.static("public"))
-
 app.use(cookieParser())
 
 
+//  import our routes
+
+import userRoute from './routes/user.routes.js'
+
+
+
+
+// route declare
+
+app.use('/api/v1/users',userRoute)
 
 
 // export {app}
