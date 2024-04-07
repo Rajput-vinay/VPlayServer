@@ -1,7 +1,7 @@
 import asyncHandler  from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudinary,deleteOnCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {subscription} from "../models/subscriptions.models.js"
 import jwt from "jsonwebtoken"
@@ -66,7 +66,7 @@ if(existingUser){
     throw new ApiError(404,"user allready exist")
 }
 // console.log(req.files)
-const avatarLocalPath = req?.files?.avatar[0]?.path
+const avatarLocalPath = req.files?.avatar[0]?.path
 if(!avatarLocalPath){
  throw new ApiError(400,'avatar is required')
 }
@@ -392,55 +392,38 @@ const updateUserAvatar = asyncHandler(async(req,res) =>{
 
 const updateUserCoverImage = asyncHandler(async(req,res) =>{
 
-    //  take the file path form req,file
-    //  validate the localfile path
-    //  delete the old image
-    //  upload the avatar on cloudinary
-    //  update the user details
-    //  return res
+    const coverImageLocalPath = req.file?.path;
+    
+    if(!coverImageLocalPath){
+        throw new ApiError(400, "coverImage file missing")
+    }
+// delete privious coverImage file on cloudinary
+    const user = await User.findById(req.user?._id)
+        .select("-password -refreshToken");
 
-    const coverImageLocalImgPath =req.file?.path
+    const previousCoverImage = user.coverImage;
+        if (previousCoverImage.public_id) {
+            await deleteOnCloudinary(previousCoverImage.public_id);
+    }  
 
-    if(!coverImageLocalImgPath){
-        throw new ApiError(402, "Invalid cover image Local Img path")
+    //upload in cloudinary and get a url file so
+    const coverImage = await uploadOnCloudinaary(coverImageLocalPath);
+
+
+    // check coverImage
+    if(!coverImage.url){
+        throw new ApiError(400, "Error while uploading on coverImage file in cloudinary")
     }
 
-
-    await User.findByIdAndDelete(
-        req.user?._id,{
-        $unset:{
-            coverImage:1
-        }
-    },
-    {
-        new:true
-    }
-    )
-
-    const UploadCloud =await uploadOnCloudinary( coverImageLocalImgPath)
-
-    if(!UploadCloud.url){
-        throw new ApiError(402, "something went wrong while upload avatar on cloud")
-    }
-
-    // 
-
-   const user = User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $ser:{
-                coverImage:coverImage.url
-            }
-        },
-        {
-           new:true
-        }
-    ).select("-password")
-
+    
     return res
     .status(200)
     .json(
-        new ApiResponse(200, user, "cover image updated successfully")
+        new ApiResponse(
+            200,
+            user,
+            "coverImage file updated successfully !!"
+        )
     )
 })
 
