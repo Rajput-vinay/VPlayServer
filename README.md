@@ -21,7 +21,7 @@ This repository contains the backend for a video streaming platform. The platfor
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/username/repository-name.git
+    git clone [https://github.com/username/repository-name.git](https://github.com/Rajput-vinay/VPlayServer.git)
     cd repository-name
     ```
 
